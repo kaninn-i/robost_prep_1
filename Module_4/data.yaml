@@ -1,5 +1,5 @@
 # пути к основной папке данных и к папкам с тренировочными, тестовыми и валидационными данными
-path: C:\Users\Илья\Documents\GitHub\robost_prep_1\Module_4
+path: /home/user1/Documents/robost_prep_1/Module_4/data
 train: train/images
 val: valid/images
 test: test/images
