@@ -6,7 +6,6 @@
 #
 
 import time
-import logging
 from .system_defs import States, StateEvents, ModeCommands, Modes, InterpreterEvents, InterpreterStates, \
     MotionGeneratorStates
 
@@ -158,14 +157,12 @@ class RobotCommand(object):
                 bool: True if operation is completed, False if failed
 
         """
-        logging.info("semiAuto inside")
+
         actual_mode = self.__req.getParameter("root/Logic/mode").get().value[0]
         while actual_mode != Modes.SEMI_AUTO_M.value:
             self.__req.setParameter("root/Logic/modeCommand", ModeCommands.GOTO_SEMI_AUTO_E.value).get()
             time.sleep(0.1)
             actual_mode = self.__req.getParameter("root/Logic/mode").get().value[0]
-            # my code
-            actual_mode = Modes.SEMI_AUTO_M.value
         return True
 
     def toolTipOffset(self, tool_tip_offset):
@@ -254,23 +251,15 @@ class RobotCommand(object):
         time.sleep(1.0)
         while True:
             counter += 1
-            # self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
-            #                         1).get()
-            self.__req.setParameter("root/Control/smoothStop/startAtStandstill",
+            self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
                                     1).get()
             interpreter_stat = self.getState()
-            interpreter_stat = 2
             if interpreter_stat == InterpreterStates.PROGRAM_PAUSE_S.value:
-                # self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
-                #                         0).get()
-                self.__req.setParameter("root/Control/smoothStop/startAtStandstill",
+                self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
                                         0).get()
                 return True
-            # if counter > max_number_of_tries:
-            if counter > 10:
-                # self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
-                #                         0).get()
-                self.__req.setParameter("root/Control/smoothStop/startAtStandstill",
+            if counter > max_number_of_tries:
+                self.__req.setParameter("root/ManipulatorControl/activateMoveToStart",
                                         0).get()
                 return False
             time.sleep(sleep_s)

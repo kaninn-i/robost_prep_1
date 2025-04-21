@@ -1,12 +1,13 @@
 
-import os
+import os, math
 print('Path main ------------',os.getcwd())
-
+from time import sleep
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow
 from gui_main import Ui_GUI  # Импорт сгенерированного класса
 
 from motion.core import RobotControl
+from motion.robot_control.motion_program import Waypoint
 
 
 # rc = RobotControl()
@@ -50,6 +51,12 @@ if not robot.engage():
     print("Не удалось активировать моторы")
     exit(1)
 
+# print(robot.getToolPosition())
+
+# print(robot.getRobotMode())
+# robot.manualCartMode()
+# print(robot.getRobotMode())
+
 # # Создание точек для движения
 # start_point = Waypoint(
 #     coordinates=[0.0, 0.0, 0.5, 0.0, 0.0, 0.0],  # x,y,z,rx,ry,rz
@@ -61,32 +68,42 @@ if not robot.engage():
 #     smoothing_factor=0.3
 # )
 
-try:
-    robot.reset()
-    # Переход в начальную позицию
-    robot.moveToStart()
+# try:
+robot.reset()
+degrees = [math.degrees(el) for el in robot.getToolPosition()]
+print(degrees)
+
+# Переход в начальную позицию
+# robot.moveToStart()
+# robot.activateMoveToStart()
+
+# # Линейное движение к целевой точке
+# robot.manualCartMode()
+# sleep(1)
+robot.moveToStart()
+# sleep(1)
+robot.moveToPointL(
+    # waypoint_list=[[180, 180, 0, 0.0, 0.0, 0.0], [200, 200, 0, 0.0, 0.0, 0.0]],
+    # waypoint_list=Waypoint([200, 200, 0, 0.0, 0.0, 0.0]),
+    waypoint_list=[[200, 200, 0, 0.0, 0.0, 0.0]],
+    tool=0,  # инструмент выключен
+    velocity=0.5,   # 50% от максимальной скорости
+    acceleration=0.3
+)
+
+# # Запуск движения
+robot.play()
     
-    # Линейное движение к целевой точке
-    robot.moveToPointL(
-        waypoints=[[180, 180, 0, 0.0, 0.0, 0.0], [200, 150, 0, 0.0, 0.0, 0.0]],
-        tool_state=0,  # инструмент выключен
-        velocity=1,   # 50% от максимальной скорости
-        acceleration=0.3
-    )
-    
-    # Запуск движения
-    robot.play()
-    
-    # Мониторинг состояния
-    while robot.getRobotState() != robot.PROGRAM_IS_DONE_S:
-        print(f"Текущая позиция: {robot.getToolPosition()}")
-        print(f"Температура моторов: {robot.getActualTemperature()}")
-        time.sleep(0.5)
+#     # Мониторинг состояния
+#     while robot.getRobotState() != robot.PROGRAM_IS_DONE_S:
+#         print(f"Текущая позиция: {robot.getToolPosition()}")
+#         print(f"Температура моторов: {robot.getActualTemperature()}")
+#         time.sleep(0.5)
         
-except Exception as e:
-    print(f"Ошибка: {str(e)}")
-finally:
-    # Остановка и отключение
-    robot.stop()
-    robot.disengage()
-    print("Робот отключен")
+# except Exception as e:
+#     print(f"Ошибка: {str(e)}")
+# finally:
+#     # Остановка и отключение
+#     robot.stop()
+#     robot.disengage()
+#     print("Робот отключен")

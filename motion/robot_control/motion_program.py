@@ -6,8 +6,7 @@
 #
 
 import os
-print('Path motion programm------------',os.getcwd())
-from motion.robot_control import motionSL_pb2
+from robot_control import motionSL_pb2
 
 
 class Waypoint(object):
@@ -190,7 +189,6 @@ class MotionProgram(object):
         move_l.referenceJoint.coordinates.extend(ref_joint_coord_rad)
 
         for waypoint in waypoint_list:
-            waypoint = Waypoint(waypoint)
             ms_waypoint_ref = move_l.waypoints.add()
             ms_waypoint_ref.constraint.type = self.__MotionSpec.POSITION
             ms_waypoint_ref.segmentVelocity = waypoint.next_segment_velocity_factor

@@ -6,14 +6,12 @@
 #
 
 import os
-print('Path core ------------',os.getcwd())
 import motorcortex
 from math import *
-# import robot_control
-from motion.robot_control.motion_program import Waypoint, MotionProgram, PoseTransformer
-from motion.robot_control.robot_command import RobotCommand
-from motion.robot_control.system_defs import *
-from motion.system_def import Path, JoyVelicity
+from robot_control.motion_program import Waypoint, MotionProgram, PoseTransformer
+from robot_control.robot_command import RobotCommand
+from robot_control.system_defs import *
+from system_def import Path, JoyVelicity
 import logging
 import threading
 
@@ -28,7 +26,7 @@ class RobotControl(object):
 
     """
         
-    def __init__(self, ip='192.168.88.105', port='5568:5567', login='root', password='secret'):
+    def __init__(self, ip='192.168.56.101', port='5567:5568', login='*', password='*'):
         logging.basicConfig(
             level=logging.DEBUG,
             format='%(levelname)s: %(message)s'
@@ -51,7 +49,7 @@ class RobotControl(object):
         parameter_tree = motorcortex.ParameterTree()
         self.__messageTypes = motorcortex.MessageTypes()
         try:
-            self.__req, sub = motorcortex.connect("ws://" + self.__hostname + ":" + self.__port,
+            self.__req, sub = motorcortex.connect("wss://" + self.__hostname + ":" + self.__port,
                                                 self.__messageTypes, parameter_tree,
                                                 certificate=self.__pathCert, timeout_ms=1000,
                                                 login=self.__login, password=self.__password)
@@ -186,21 +184,16 @@ class RobotControl(object):
                 bool: ARM parameter if operation is completed, False if failed
         
         """
-        logging.info("I'm here to try semiAuto")
         self.__robot.semiAutoMode()
-        logging.info("semiAuto finish")
         motion_program = MotionProgram(self.__req, self.__messageTypes)    
         start_point = []
-        # start_point.append(Waypoint([radians(0), radians(0), radians(90), radians(0), radians(90), radians(0)]))
-        logging.info("I'm here to try")
-        start_point.append(Waypoint([radians(0), radians(-0.0878906250000058), radians(90.08789062500595), radians(90.08789062500595), radians(90.08789062500595), radians(-8.201444248182037)]))
+        start_point.append(Waypoint([radians(0), radians(0), radians(90), radians(0), radians(90), radians(0)]))
         motion_program.addMoveJ(start_point, 0.05, 0.1)
-        logging.info("moveJ complete")
+
         motion_program.send("move_to_start_point").get() 
         # self.__robot.play(wait_time=0.25)
 
         if self.__robot.play(wait_time=0.25) is InterpreterStates.MOTION_NOT_ALLOWED_S.value:
-            logging.info("move to start")
             if self.__robot.moveToStart(200):
                 logging.info("Robot move to start position")
             else:
@@ -445,7 +438,4 @@ class RobotControl(object):
         
     def __cap_velocity(self, velocities, max_velocity):
         return [min(max(velocity, -max_velocity), max_velocity) for velocity in velocities]
-
-
-rc = RobotControl()
-rc.connect()
+    

@@ -10,19 +10,15 @@ from enum import Enum
 
 class Path(Enum):
     """Path list of the robot ARM"""
-    # ROBOT_STATE = 'root/Logic/stateCommand' 
-    ROBOT_STATE = 'root/Control/.state' 
+    ROBOT_STATE = 'root/Logic/stateCommand'
     ROBOT_MODE = 'root/Logic/mode'
     ROBOT_MODE_SET = 'root/Logic/modeCommand'
-    # CURRENT_TOOL_POSE = 'root/ManipulatorControl/manipulatorToolPoseActual'
-    CURRENT_TOOL_POSE = "root/Control/actualJointPositionsFilteredWithoutOffset"
+    CURRENT_TOOL_POSE = 'root/ManipulatorControl/manipulatorToolPoseActual'
     CURRENT_JOINT_POSE_RADIANS = 'root/AxesControl/axesPositionsActual'
     HOSTIN_JOINT_VELOCITY = 'root/ManipulatorControl/hostInJointVelocity'
     HOSTIN_TOOL_VELOCITY = 'root/ManipulatorControl/hostInToolVelocity'
     ACTIVATE_MOVE_TO_START = 'root/ManipulatorControl/activateMoveToStart'
-    # TOOL_CMD = 'root/UserParameters/IO/Gripper'
-    # TOOL_CMD = 'root/MotionInterpreter/.state'
-    TOOL_CMD = 'root/Control/autoMotionGenerator/motionGenCmd'
+    TOOL_CMD = 'root/UserParameters/IO/Gripper'
     STATE_CMD = 'root/MotionInterpreter/actualStateOut'
     MANIPULABILITY_CMD = 'root/ManipulatorControl/manipulabilityDetector/input'
     READSDO_CMD = 'root/Ethercat/Robot/read_sdo'
