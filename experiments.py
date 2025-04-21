@@ -114,5 +114,5 @@ def shuffle_with_prefix(directory):
     
     print("Файлы перемешаны!")
 
-folder_path = "dataset_kubiki"
+folder_path = r"C:\Users\Илья\Documents\GitHub\robost_prep_1\data\images"
 shuffle_with_prefix(folder_path)
