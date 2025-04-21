@@ -1,3 +1,5 @@
 45_mm
 pyramid
 cylinder
+ball
+cube
