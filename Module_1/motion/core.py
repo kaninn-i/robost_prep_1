@@ -28,7 +28,7 @@ class RobotControl(object):
 
     """
         
-    def __init__(self, ip='192.168.88.105', port='5568:5567', login='root', password='secret'):
+    def __init__(self, ip='192.168.2.55', port='5568:5567', login='root', password='secret'):
         logging.basicConfig(
             level=logging.DEBUG,
             format='%(levelname)s: %(message)s'

@@ -26,7 +26,7 @@ class RobotControl(object):
 
     """
         
-    def __init__(self, ip='192.168.56.101', port='5567:5568', login='*', password='*'):
+    def __init__(self, ip='192.168.56.101', port='5568:5567', login='*', password='*'):
         logging.basicConfig(
             level=logging.DEBUG,
             format='%(levelname)s: %(message)s'
@@ -49,12 +49,16 @@ class RobotControl(object):
         parameter_tree = motorcortex.ParameterTree()
         self.__messageTypes = motorcortex.MessageTypes()
         try:
-            self.__req, sub = motorcortex.connect("wss://" + self.__hostname + ":" + self.__port,
+            self.__req, sub = motorcortex.connect("ws://" + self.__hostname + ":" + self.__port,
                                                 self.__messageTypes, parameter_tree,
                                                 certificate=self.__pathCert, timeout_ms=1000,
                                                 login=self.__login, password=self.__password)
             
             self.__robot = RobotCommand(self.__req, self.__messageTypes)
+            tree_req = self.__req.getParameterTree()
+            params = tree_req.get()
+            with open("parameters_new.txt", "w", encoding="utf-8") as f:
+                f.write(str(params))
             logging.info("Robot ARM connected")
             return True
         
@@ -235,10 +239,10 @@ class RobotControl(object):
             Waypoint([x, y, z, rx, ry, rz]) - the waypoint is set as the absolute position of the manipulator in meters
 
         """
-        if tool == 1:
-            self.__toolON()
-        else:
-            self.__toolOFF()
+        # if tool == 1:
+        #     self.__toolON()
+        # else:
+        #     self.__toolOFF()
         # self.__robot.semiAutoMode()
         motion_program = MotionProgram(self.__req, self.__messageTypes) 
         motion_program.addMoveL(waypoint_list, velocity, acceleration,
@@ -268,10 +272,10 @@ class RobotControl(object):
         """
                 
         # self.__robot.semiAutoMode()
-        if tool == 1:
-            self.__toolON()
-        else:
-            self.__toolOFF()
+        # if tool == 1:
+        #     self.__toolON()
+        # else:
+        #     self.__toolOFF()
 
         motion_program = MotionProgram(self.__req, self.__messageTypes) 
         motion_program.addMoveC(waypoint_list, angle, velocity, acceleration,
@@ -292,10 +296,10 @@ class RobotControl(object):
 
         """
 
-        if tool == 1:
-            self.__toolON()
-        else:
-            self.__toolOFF()
+        # if tool == 1:
+        #     self.__toolON()
+        # else:
+        #     self.__toolOFF()
         
         # self.__robot.semiAutoMode()
         motion_program = MotionProgram(self.__req, self.__messageTypes) 
