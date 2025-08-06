@@ -1,109 +1,147 @@
-
-import os, math
-print('Path main ------------',os.getcwd())
-from time import sleep
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel 
 from gui_main import Ui_GUI  # Импорт сгенерированного класса
+import cv2
+import numpy as np
+from ultralytics import YOLO
 
-from motion.core import RobotControl
-from motion.robot_control.motion_program import Waypoint
-
-
-# rc = RobotControl()
-# print('----------------', rc.getActualStateOut())
-
-
-# print(rc.connect())
-# rc.__toolOFF()
-# rc.engage()
-
-# print('Robot state:', rc.getRobotState())
-# print('Robot mode:', rc.getRobotMode())
-# rc.moveToPointL(waypoint_list=[12,12,23])
-# print(rc.moveToPointL())
-
-# class MainWindow(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#         self.ui = Ui_GUI()
-#         self.ui.setupUi(self)  # Критически важная строка!
-
-
-# app = QApplication(sys.argv)
-# window = MainWindow()
-# window.show()  # Не забыть показать окно!
-# sys.exit(app.exec())
-
-
-import time
-
-# Создание объекта робота
-robot = RobotControl()  # IP и порт по умолчанию
-
-# Подключение к роботу
-if not robot.connect():
-    print("Ошибка подключения!")
-    exit(1)
-
-# Активация двигателей
-if not robot.engage():
-    print("Не удалось активировать моторы")
-    exit(1)
-
-# print(robot.getToolPosition())
-
-# print(robot.getRobotMode())
-# robot.manualCartMode()
-# print(robot.getRobotMode())
-
-# # Создание точек для движения
-# start_point = Waypoint(
-#     coordinates=[0.0, 0.0, 0.5, 0.0, 0.0, 0.0],  # x,y,z,rx,ry,rz
-#     smoothing_factor=0.2
-# )
-
-# target_point = Waypoint(
-#     coordinates=[0.4, -0.2, 0.3, 1.57, 0.0, 0.0],
-#     smoothing_factor=0.3
-# )
-
-# try:
-robot.reset()
-degrees = [math.degrees(el) for el in robot.getToolPosition()]
-print(degrees)
-
-# Переход в начальную позицию
-# robot.moveToStart()
-# robot.activateMoveToStart()
-
-# # Линейное движение к целевой точке
-# robot.manualCartMode()
-# sleep(1)
-robot.moveToStart()
-# sleep(1)
-robot.moveToPointL(
-    # waypoint_list=[[180, 180, 0, 0.0, 0.0, 0.0], [200, 200, 0, 0.0, 0.0, 0.0]],
-    # waypoint_list=Waypoint([200, 200, 0, 0.0, 0.0, 0.0]),
-    waypoint_list=[[200, 200, 0, 0.0, 0.0, 0.0]],
-    tool=0,  # инструмент выключен
-    velocity=0.5,   # 50% от максимальной скорости
-    acceleration=0.3
-)
-
-# # Запуск движения
-robot.play()
+class MainWindow(QMainWindow):
+  def __init__(self):
+    super().__init__()
+    self.ui = Ui_GUI()
+    self.ui.setupUi(self)
+    self.model = self.load_yolo_model(model_path=r'C:\Users\Илья\Documents\GitHub\robost_prep_1\runs\detect\new_df_objects_detection_v1_5ep\weights\best.pt')
     
-#     # Мониторинг состояния
-#     while robot.getRobotState() != robot.PROGRAM_IS_DONE_S:
-#         print(f"Текущая позиция: {robot.getToolPosition()}")
-#         print(f"Температура моторов: {robot.getActualTemperature()}")
-#         time.sleep(0.5)
-        
-# except Exception as e:
-#     print(f"Ошибка: {str(e)}")
-# finally:
-#     # Остановка и отключение
-#     robot.stop()
-#     robot.disengage()
-#     print("Робот отключен")
+    # self.init_buttons()
+    # self.init_tables()
+    # self.init_cv()
+    
+  # def init_buttons(self):
+    # кнопки
+    self.ui.OnButton.clicked.connect(self.OnButton_toggle)
+    self.ui.StopButton.clicked.connect(self.StopButton_toggle)
+    self.ui.PauseButton.clicked.connect(self.PauseButton_toggle)
+    
+  # def init_tables(self):
+    # pass
+  
+  # def init_cv(self):
+    # --- камеры и прилегающие переменные ---
+    self.cap = cv2.VideoCapture(0)  # 0 - индекс камеры по умолчанию
+    
+    # Создаем QLabel для отображения видео внутри QFrame
+    self.video_label1 = QLabel(self.ui.video_frame_1)
+    self.video_label2 = QLabel(self.ui.video_frame_2)
+    self.video_label3 = QLabel(self.ui.video_frame_3)
+    
+    # Настраиваем размеры и выравнивание
+    for label in [self.video_label1, self.video_label2, self.video_label3]:
+      label.setAlignment(Qt.AlignCenter)
+      label.setMinimumSize(QSize(251, 171))
+      label.setScaledContents(True)
+    
+    # Таймер для обновления кадров
+    self.timer = QTimer(self)
+    self.timer.timeout.connect(self.update_frames)
+    self.timer.start(30)  # 30 ms (≈33 FPS)
+  
+  # ------------------------- кнопки, общий интерфейс 
+  def OnButton_toggle(self):
+    '''Кнопка On (включения)'''
+    print('OnButton is clicked')
+    self.ui.lineEdit.changeC("Active" if self.ui.lineEdit.text() == "Stopped" else "Stopped")
+    
+  def StopButton_toggle(self):
+    '''Кнопка Stop (остановки)'''
+    print('StopButton is clicked')
+    
+  def PauseButton_toggle(self):
+    '''Кнопка Pause (пауза)'''
+    print('PauseButton is clicked')
+  
+  # ------------------------- камеры -------------------------
+  def load_yolo_model(self, model_path):
+    '''Загрузка YOLO модели'''
+    try:
+        model = YOLO(model_path)
+        print(f"Модель {model_path} успешно загружена!")
+        return model
+    except Exception as e:
+        print(f"Ошибка загрузки модели: {e}")
+        return None
+  
+  def update_frames(self):
+    '''Функция для отображения картинки'''
+    # Читаем кадр с камеры
+    ret, frame = self.cap.read()
+    if not ret:
+        return
+
+    # Оригинальное изображение для первого фрейма
+    rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    # Обработка для второго фрейма (контуры)
+    processed_frame = self.detect_contours(frame)
+    
+    # Обработка для третьего фрейма (YOLO)
+    yolo_frame = self.detect_objects(frame.copy()) if self.model else frame
+    
+    # Обновляем все три фрейма
+    self.update_single_frame(self.video_label1, rgb_image)
+    self.update_single_frame(self.video_label2, processed_frame)
+    self.update_single_frame(self.video_label3, yolo_frame)
+    
+  def detect_objects(self, frame):
+    '''Детекция объектов с помощью YOLO'''
+    results = self.model(frame, verbose=False)
+    
+    # Визуализация результатов
+    annotated_frame = results[0].plot()
+    
+    # Конвертация цветового пространства
+    return cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+    
+  def detect_contours(self, frame):
+    '''контуры'''
+    # Конвертация в grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Размытие для уменьшения шума
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # Обнаружение краев методом Canny
+    edges = cv2.Canny(blurred, 50, 150)
+
+    # Поиск контуров
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Создаем копию оригинального кадра для рисования
+    contour_frame = frame.copy()
+
+    # Рисуем контуры зеленым цветом
+    cv2.drawContours(contour_frame, contours, -1, (0, 255, 0), 2)
+
+    # Конвертируем обратно в RGB для отображения в Qt
+    return cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
+    
+  def update_single_frame(self, label, image):
+      '''Конвертация и масштабирование изображения'''
+      h, w, ch = image.shape
+      bytes_per_line = ch * w
+      qt_image = QImage(image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+      
+      scaled_image = qt_image.scaled(
+          label.size(), 
+          Qt.AspectRatioMode.KeepAspectRatio,
+          Qt.TransformationMode.SmoothTransformation
+      )
+      
+      label.setPixmap(QPixmap.fromImage(scaled_image))
+
+
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+sys.exit(app.exec())
